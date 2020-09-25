@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 import myUtils as mu
 
 def cpFiles(file, dir1, dir2):
@@ -8,7 +9,10 @@ def cpFiles(file, dir1, dir2):
         return
 
     toDirPath = os.path.relpath(dir2)
-    os.makedirs(toDirPath)
+    try:
+        os.makedirs(toDirPath)
+    except FileExistsError:
+        pass
 
     filePath = mu.getPath(file)
     if filePath is None:
@@ -18,22 +22,26 @@ def cpFiles(file, dir1, dir2):
     with open(filePath, 'r') as f:
         fFiles = f.read().splitlines()
 
-    print("Following files missing in directory:\n")
-    cpFiles = 0
+    print(f"Copying following files in {filePath}, from {fromDirPath} to {toDirPath}:\n")
+    missedFile = 0
     matchedFiles = 0
+
+    print("Missed files:")
 
     for f in fFiles:
         if f == "\n":
             continue
         if f.startswith("#"):
             continue
-        if not mu.containsPrefix(f, dirFiles):
+        fileToCopy = mu.getPrefixFile(f, dirFiles)
+        if fileToCopy is None:
             print(f)
-            cpFiles += 1
+            missedFile += 1
         else:
             matchedFiles += 1
+            mu.moveFile(fileToCopy, fromDirPath, toDirPath)
     
-    print(f"\nMatched Files:\t{matchedFiles}\nMissing Files:\t{cpFiles}\nTotal Files:\t{matchedFiles+cpFiles}")
+    print(f"\nMatched Files:\t{matchedFiles}\nMissing Files:\t{missedFile}\nTotal Files:\t{matchedFiles+missedFile}")
 
 
 if __name__ == "__main__":
